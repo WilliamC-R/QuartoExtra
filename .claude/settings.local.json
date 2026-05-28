@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\user\\\\Downloads\\\\QuartoExtra\\\\QuartoExtra-master\" -Recurse -Directory)",
+      "Bash(Select-Object -First 20 FullName)",
+      "Bash(npx tsc *)",
+      "Bash(powershell -Command \"\\(Get-Content 'components\\\\importar\\\\ImportarView.tsx' -Raw\\) -replace '\\\\\"\\\\\\\\\\\\\\\\uFEFFimovel,hospede,checkin,checkout,valor,origem\\\\\\\\\\\\\\\\nApto Beira-Mar 101,Jo\\\\\\\\u00e3o Silva,2026-06-01,2026-06-05,1800,Airbnb\\\\\\\\\\\\\\\\n\\\\\"', '\\\\\"\\\\\\\\\\\\\\\\uFEFFimovel,hospede,checkin,checkout,valor,origem\\\\\\\\\\\\\\\\n\\\\\" +\\\\n      \\\\\"Apto Beira-Mar 101,Jo\\\\\\\\u00e3o Silva,01/06/2026,05/06/2026,\\\\\\\\\\\\\\\\\\\\\"1.800,00\\\\\\\\\\\\\\\\\\\\\",Airbnb\\\\\\\\\\\\\\\\n\\\\\" +\\\\n      \\\\\"Apto Beira-Mar 101,Maria Lima,10/06/2026,15/06/2026,\\\\\\\\\\\\\\\\\\\\\"2.250,00\\\\\\\\\\\\\\\\\\\\\",Booking\\\\\\\\\\\\\\\\n\\\\\"' | Set-Content 'components\\\\importar\\\\ImportarView.tsx' -Encoding utf8\")",
+      "PowerShell($lines = \\(Get-Content \"C:\\\\Users\\\\willi\\\\OneDrive\\\\Área de Trabalho\\\\william\\\\Imoveis\\\\QuartoExtra-master\\\\reservas_studios_2025.csv\" | Measure-Object -Line\\).Lines; Write-Output \"Linhas: $lines\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\willi\\\\OneDrive\\\\Área de Trabalho\\\\william\\\\Imoveis\\\\QuartoExtra-master\\\\supabase\\\\migrations\\\\009_itbi.sql\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\willi\\\\OneDrive\\\\Área de Trabalho\\\\william\\\\Imoveis\\\\QuartoExtra-master\\\\supabase\\\\migrations\\\\010_repasse_iptu_anual.sql\" -Force)",
+      "Bash(Write-Host \"Removidos com sucesso\")",
+      "Bash(node -e ' *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\user\\\\Desktop\\\\QuartoExtra-master\" -Recurse -File)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(xargs wc -l)",
+      "Bash(findstr /i \"exportPDF\\\\|PDFExportModal\")",
+      "Bash(Select-String \"exportPDF|PDFExportModal\")",
+      "Bash(Select-String -NotMatch \"middleware|server\\\\.ts\")",
+      "PowerShell(cd \"C:\\\\Users\\\\user\\\\Desktop\\\\QuartoExtra-master\"; npx tsc --noEmit 2>&1 | Where-Object { $_ -notmatch \"middleware|server\\\\.ts\" })",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\willi\\\\OneDrive\\\\Área de Trabalho\\\\QuartoExtra-master\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(dir \"C:\\\\Users\\\\willi\\\\OneDrive\\\\Área de Trabalho\\\\QuartoExtra-master\" /B)"
+    ]
+  }
+}
