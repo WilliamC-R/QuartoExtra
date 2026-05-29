@@ -62,6 +62,7 @@ export interface Reserva {
   custo_limpeza: number;
   custo_energia: number;
   custo_outros: number;
+  gmail_message_id?: string | null;
   created_at?: string;
 }
 

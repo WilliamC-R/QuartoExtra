@@ -10,6 +10,7 @@ import {
   IconUpload,
   IconMap,
   IconCar,
+  IconPlugConnected,
 } from "@tabler/icons-react";
 
 const links = [
@@ -20,6 +21,7 @@ const links = [
   { href: "/reservas", label: "Reservas", icon: IconCalendar },
   { href: "/relatorios", label: "Relatórios", icon: IconFileAnalytics },
   { href: "/importar", label: "Importar", icon: IconUpload },
+  { href: "/integracoes", label: "Integrações", icon: IconPlugConnected },
 ];
 
 export function Nav() {
