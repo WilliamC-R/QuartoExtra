@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Vacância — Airbnb</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; background: #f5f5f3; color: #1a1a18; min-height: 100vh; }
+a { color: inherit; }
+
+/* Layout */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+.topbar { background: #fff; border-bottom: 0.5px solid rgba(0,0,0,0.12); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 100; }
+.topbar-logo { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.topbar-logo i { font-size: 20px; color: #1D9E75; }
+.topbar-right { font-size: 12px; color: #888; }
+
+.nav { background: #fff; border-bottom: 0.5px solid rgba(0,0,0,0.12); padding: 0 24px; display: flex; gap: 0; }
+.nav-btn { padding: 12px 16px; font-size: 13px; border: none; background: transparent; cursor: pointer; color: #888; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 6px; transition: color 0.15s; }
+.nav-btn:hover { color: #1a1a18; }
+.nav-btn.active { color: #1a1a18; border-bottom-color: #1a1a18; font-weight: 500; }
+
+.main { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* Metrics */
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.mc { background: #fff; border-radius: 10px; padding: 14px 16px; border: 0.5px solid rgba(0,0,0,0.1); }
+.mc-label { font-size: 11px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.mc-val { font-size: 22px; font-weight: 500; color: #1a1a18; }
+.mc-sub { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+/* Cards */
+.card { background: #fff; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+.card-title { font-size: 11px; font-weight: 500; color: #888; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+
+/* Tables */
+.tbl-wrap { border: 0.5px solid rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; background: #fff; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.tbl th { font-size: 11px; text-align: left; color: #888; font-weight: 500; padding: 10px 14px; border-bottom: 0.5px solid rgba(0,0,0,0.1); text-transform: uppercase; letter-spacing: 0.05em; background: #fafafa; }
+.tbl td { padding: 11px 14px; border-bottom: 0.5px solid rgba(0,0,0,0.07); color: #1a1a18; vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover td { background: #fafaf8; }
+
+/* Badges */
+.badge { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 500; }
+.badge-ok { background: #E1F5EE; color: #085041; }
+.badge-warn { background: #FAEEDA; color: #633806; }
+.badge-bad { background: #FCEBEB; color: #791F1F; }
+.badge-block { background: #F1EFE8; color: #444441; }
+.badge-blue { background: #E6F1FB; color: #0C447C; }
+
+/* Occ bar */
+.occ-bar { height: 5px; border-radius: 3px; background: #eee; overflow: hidden; margin-top: 5px; }
+.occ-fill { height: 100%; border-radius: 3px; }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 12px; color: #666; font-weight: 500; }
+.form-group input, .form-group select {
+  width: 100%; padding: 8px 10px; border: 0.5px solid rgba(0,0,0,0.2); border-radius: 7px;
+  font-size: 13px; background: #fff; color: #1a1a18; outline: none; transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus { border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.08); }
+
+/* Buttons */
+.btn-primary { background: #1a1a18; color: #fff; border: none; padding: 9px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-secondary { background: transparent; border: 0.5px solid rgba(0,0,0,0.2); color: #1a1a18; padding: 9px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
+.btn-secondary:hover { background: #f5f5f3; }
+.btn-icon { background: transparent; border: 0.5px solid rgba(0,0,0,0.15); color: #666; padding: 6px 10px; border-radius: 7px; font-size: 13px; cursor: pointer; transition: background 0.15s; }
+.btn-icon:hover { background: #f5f5f3; }
+
+/* Toolbar row */
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.filter-row input[type=text], .filter-row select { padding: 7px 10px; border: 0.5px solid rgba(0,0,0,0.2); border-radius: 7px; font-size: 13px; background: #fff; color: #1a1a18; outline: none; }
+.filter-row input[type=text] { width: 180px; }
+
+/* Rank */
+.rank-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.rank-name { width: 140px; font-size: 12px; color: #1a1a18; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-track { flex: 1; height: 7px; background: #eee; border-radius: 4px; overflow: hidden; }
+.rank-fill { height: 100%; border-radius: 4px; }
+.rank-val { width: 36px; font-size: 12px; text-align: right; color: #888; }
+
+/* Chart legend */
+.chart-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: #888; margin-bottom: 10px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
+/* Alerts */
+.alert { font-size: 12px; padding: 9px 13px; border-radius: 8px; margin-bottom: 8px; }
+.alert-success { background: #E1F5EE; color: #085041; }
+.alert-info { background: #E6F1FB; color: #0C447C; }
+.alert-warn { background: #FAEEDA; color: #633806; }
+.alert-danger { background: #FCEBEB; color: #791F1F; }
+
+/* Import */
+.import-box { border: 1px dashed rgba(0,0,0,0.2); border-radius: 10px; padding: 28px; text-align: center; color: #888; font-size: 13px; cursor: pointer; transition: background 0.15s; margin-bottom: 14px; }
+.import-box:hover { background: #fafaf8; }
+.import-box i { font-size: 28px; display: block; margin-bottom: 10px; color: #bbb; }
+
+/* Page header */
+.page-header { margin-bottom: 20px; }
+.page-header h1 { font-size: 18px; font-weight: 500; margin-bottom: 3px; }
+.page-header p { font-size: 13px; color: #888; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .main { padding: 14px; }
+  .nav-btn span { display: none; }
+  .tbl th:nth-child(n+4), .tbl td:nth-child(n+4) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <i class="ti ti-home-2"></i>
+      Controle de Vacância
+    </div>
+    <div class="topbar-right" id="topbar-date"></div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showTab('dashboard', this)"><i class="ti ti-chart-bar"></i> <span>Dashboard</span></button>
+    <button class="nav-btn" onclick="showTab('imoveis', this)"><i class="ti ti-home"></i> <span>Imóveis</span></button>
+    <button class="nav-btn" onclick="showTab('reservas', this)"><i class="ti ti-calendar"></i> <span>Reservas</span></button>
+    <button class="nav-btn" onclick="showTab('relatorios', this)"><i class="ti ti-file-analytics"></i> <span>Relatórios</span></button>
+    <button class="nav-btn" onclick="showTab('importar', this)"><i class="ti ti-upload"></i> <span>Importar</span></button>
+  </nav>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="section active">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Visão consolidada de todos os imóveis</p>
+      </div>
+      <div class="metrics-grid" id="kpis"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Ocupação por imóvel — mês atual</div>
+          <div id="rank-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Tendência — últimos 6 meses</div>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#1D9E75;"></span>Ocupação %</span>
+            <span><span class="legend-dot" style="background:#378ADD;"></span>Receita (R$ mil)</span>
+          </div>
+          <div style="position:relative;height:220px;"><canvas id="chartTrend" role="img" aria-label="Tendência de ocupação e receita nos últimos 6 meses"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Alertas</div>
+        <div id="alertas"></div>
+      </div>
+    </div>
+
+    <!-- IMÓVEIS -->
+    <div id="tab-imoveis" class="section">
+      <div class="page-header">
+        <h1>Imóveis</h1>
+        <p>Cadastro e gestão do portfólio</p>
+      </div>
+      <div class="toolbar">
+        <div class="filter-row">
+          <select id="filtroStatus" onchange="renderImoveis()">
+            <option value="">Todos os status</option>
+            <option value="ativo">Ativo</option>
+            <option value="manutencao">Em manutenção</option>
+            <option value="bloqueado">Bloqueado</option>
+          </select>
+          <input type="text" id="busca" placeholder="Buscar por nome ou bairro..." oninput="renderImoveis()">
+        </div>
+        <button class="btn-primary" onclick="showFormImovel()"><i class="ti ti-plus"></i> Novo imóvel</button>
+      </div>
+
+      <div id="form-imovel" style="display:none;" class="card">
+        <div class="card-title" id="form-imovel-title">Novo imóvel</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Nome / código</label><input type="text" id="fi-nome" placeholder="Ex: Apto Beira-Mar 101"></div>
+          <div class="form-group"><label>Cidade</label><input type="text" id="fi-cidade" placeholder="Florianópolis"></div>
+          <div class="form-group"><label>Bairro</label><input type="text" id="fi-bairro" placeholder="Jurerê"></div>
+          <div class="form-group"><label>Tipo</label>
+            <select id="fi-tipo"><option>Apartamento</option><option>Casa</option><option>Studio</option><option>Chalé</option><option>Outro</option></select>
+          </div>
+          <div class="form-group"><label>Diária padrão (R$)</label><input type="number" id="fi-diaria" placeholder="350"></div>
+          <div class="form-group"><label>Capacidade (pessoas)</label><input type="number" id="fi-cap" placeholder="4"></div>
+          <div class="form-group"><label>Status</label>
+            <select id="fi-status"><option value="ativo">Ativo</option><option value="manutencao">Em manutenção</option><option value="bloqueado">Bloqueado</option></select>
+          </div>
+          <div class="form-group"><label>Observações</label><input type="text" id="fi-obs" placeholder="Opcional"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary" onclick="salvarImovel()"><i class="ti ti-check"></i> Salvar</button>
+          <button class="btn-secondary" onclick="document.getElementById('form-imovel').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th style="width:26%">Imóvel</th>
+            <th style="width:11%">Tipo</th>
+            <th style="width:14%">Ocupação</th>
+            <th style="width:14%">Receita/mês</th>
+            <th style="width:11%">Diária</th>
+            <th style="width:11%">Status</th>
+            <th style="width:13%">Ações</th>
+          </tr></thead>
+          <tbody id="tbody-imoveis"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RESERVAS -->
+    <div id="tab-reservas" class="section">
+      <div class="page-header">
+        <h1>Reservas</h1>
+        <p>Histórico e cadastro de reservas</p>
+      </div>
+      <div class="toolbar">
+        <div class="filter-row">
+          <select id="filtroImovelRes" onchange="renderReservas()"><option value="">Todos os imóveis</option></select>
+          <select id="filtroMes" onchange="renderReservas()">
+            <option value="">Todos os meses</option>
+            <option value="0">Jan</option><option value="1">Fev</option><option value="2">Mar</option>
+            <option value="3">Abr</option><option value="4">Mai</option><option value="5">Jun</option>
+            <option value="6">Jul</option><option value="7">Ago</option><option value="8">Set</option>
+            <option value="9">Out</option><option value="10">Nov</option><option value="11">Dez</option>
+          </select>
+          <select id="filtroOrigem" onchange="renderReservas()">
+            <option value="">Todas as origens</option>
+            <option>Airbnb</option><option>Booking</option><option>Direto</option><option>Outro</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="showFormReserva()"><i class="ti ti-plus"></i> Nova reserva</button>
+      </div>
+
+      <div id="form-reserva" style="display:none;" class="card">
+        <div class="card-title">Nova reserva</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Imóvel</label><select id="fr-imovel" onchange="calcValorSugerido()"></select></div>
+          <div class="form-group"><label>Hóspede</label><input type="text" id="fr-hospede" placeholder="Nome completo"></div>
+          <div class="form-group"><label>Check-in</label><input type="date" id="fr-in" onchange="calcValorSugerido()"></div>
+          <div class="form-group"><label>Check-out</label><input type="date" id="fr-out" onchange="calcValorSugerido()"></div>
+          <div class="form-group"><label>Valor total (R$)</label><input type="number" id="fr-valor" placeholder="Calculado automaticamente"></div>
+          <div class="form-group"><label>Origem</label>
+            <select id="fr-origem"><option>Airbnb</option><option>Booking</option><option>Direto</option><option>Outro</option></select>
+          </div>
+          <div class="form-group"><label>Observações</label><input type="text" id="fr-obs" placeholder="Opcional"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary" onclick="salvarReserva()"><i class="ti ti-check"></i> Salvar reserva</button>
+          <button class="btn-secondary" onclick="document.getElementById('form-reserva').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th style="width:22%">Imóvel</th>
+            <th style="width:15%">Hóspede</th>
+            <th style="width:11%">Check-in</th>
+            <th style="width:11%">Check-out</th>
+            <th style="width:9%">Noites</th>
+            <th style="width:13%">Valor</th>
+            <th style="width:11%">Origem</th>
+            <th style="width:8%">Ações</th>
+          </tr></thead>
+          <tbody id="tbody-reservas"></tbody>
+        </table>
+      </div>
+      <div id="reservas-total" style="padding:10px 14px;font-size:12px;color:#888;"></div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div id="tab-relatorios" class="section">
+      <div class="page-header">
+        <h1>Relatórios</h1>
+        <p>Análise de performance por período</p>
+      </div>
+      <div class="toolbar">
+        <div class="filter-row">
+          <select id="relPeriodo" onchange="renderRelatorio()">
+            <option value="3">Últimos 3 meses</option>
+            <option value="6" selected>Últimos 6 meses</option>
+            <option value="12">Últimos 12 meses</option>
+          </select>
+        </div>
+        <button class="btn-secondary" onclick="exportCSV()"><i class="ti ti-download"></i> Exportar CSV</button>
+      </div>
+      <div class="metrics-grid" id="rel-kpis"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Receita por imóvel</div>
+          <div style="position:relative;" id="chart-receita-wrap"><canvas id="chartReceita" role="img" aria-label="Receita por imóvel no período"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Reservas por origem</div>
+          <div style="position:relative;height:260px;"><canvas id="chartOrigem" role="img" aria-label="Distribuição de reservas por origem"></canvas></div>
+        </div>
+      </div>
+      <div class="tbl-wrap" style="margin-top:16px;">
+        <table class="tbl">
+          <thead><tr>
+            <th style="width:26%">Imóvel</th>
+            <th style="width:12%">Reservas</th>
+            <th style="width:14%">Noites</th>
+            <th style="width:14%">Ocupação</th>
+            <th style="width:14%">Receita</th>
+            <th style="width:14%">Ticket médio</th>
+            <th style="width:6%">CDI*</th>
+          </tr></thead>
+          <tbody id="tbody-relatorio"></tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;color:#aaa;margin-top:8px;">* Coluna CDI indica se o retorno anual estimado do imóvel supera o CDI de referência (10,5% a.a.)</p>
+    </div>
+
+    <!-- IMPORTAR -->
+    <div id="tab-importar" class="section">
+      <div class="page-header">
+        <h1>Importar reservas</h1>
+        <p>Upload de CSV do Airbnb, Booking ou template próprio</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Upload de arquivo CSV</div>
+        <div class="alert alert-info" style="margin-bottom:14px;">Formatos aceitos: exportação direta do Airbnb (.csv), Booking (.csv) ou template próprio. O sistema detecta as colunas automaticamente.</div>
+        <label class="import-box" for="csvInput">
+          <i class="ti ti-cloud-upload"></i>
+          Clique para selecionar arquivo CSV
+          <div style="font-size:11px;margin-top:6px;color:#bbb;">ou arraste e solte aqui</div>
+        </label>
+        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+        <div id="import-preview"></div>
+        <div id="col-mapping" style="display:none;">
+          <div class="card-title" style="margin-top:16px;">Mapeamento de colunas</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Coluna → Imóvel</label><input type="text" id="col-imovel" placeholder="property_name"></div>
+            <div class="form-group"><label>Coluna → Hóspede</label><input type="text" id="col-hospede" placeholder="guest_name"></div>
+            <div class="form-group"><label>Coluna → Check-in</label><input type="text" id="col-in" placeholder="start_date"></div>
+            <div class="form-group"><label>Coluna → Check-out</label><input type="text" id="col-out" placeholder="end_date"></div>
+            <div class="form-group"><label>Coluna → Valor</label><input type="text" id="col-valor" placeholder="amount"></div>
+            <div class="form-group"><label>Coluna → Origem</label><input type="text" id="col-origem" placeholder="platform"></div>
+          </div>
+          <button class="btn-primary" onclick="confirmarImport()"><i class="ti ti-check"></i> Confirmar importação</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Template para preenchimento manual em lote</div>
+        <p style="font-size:13px;color:#666;margin-bottom:14px;">Baixe o template CSV, preencha com suas reservas e importe acima.</p>
+        <button class="btn-secondary" onclick="downloadTemplate()"><i class="ti ti-download"></i> Baixar template CSV</button>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const now = new Date();
+const curYear = now.getFullYear();
+let editingImovelId = null;
+let csvRows = [], csvHeaders = [];
+let chartTrend = null, chartReceita = null, chartOrigem = null;
+
+document.getElementById('topbar-date').textContent = now.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function loadData() {
+  let imoveis, reservas;
+  try { imoveis = JSON.parse(localStorage.getItem('vc_imoveis') || 'null'); } catch(e) { imoveis = null; }
+  try { reservas = JSON.parse(localStorage.getItem('vc_reservas') || 'null'); } catch(e) { reservas = null; }
+
+  if (!imoveis) {
+    imoveis = [
+      {id:'i1',nome:'Apto Beira-Mar 101',cidade:'Florianópolis',bairro:'Jurerê',tipo:'Apartamento',diaria:450,cap:4,status:'ativo',obs:''},
+      {id:'i2',nome:'Casa Canasvieiras A',cidade:'Florianópolis',bairro:'Canasvieiras',tipo:'Casa',diaria:680,cap:8,status:'ativo',obs:''},
+      {id:'i3',nome:'Studio Centro 05',cidade:'Florianópolis',bairro:'Centro',tipo:'Studio',diaria:220,cap:2,status:'ativo',obs:''},
+      {id:'i4',nome:'Apto Ingleses 302',cidade:'Florianópolis',bairro:'Ingleses',tipo:'Apartamento',diaria:380,cap:5,status:'ativo',obs:''},
+      {id:'i5',nome:'Chalé Lagoa 12',cidade:'Florianópolis',bairro:'Lagoa da Conceição',tipo:'Chalé',diaria:520,cap:6,status:'manutencao',obs:'Reforma banheiro'},
+      {id:'i6',nome:'Casa Campeche B',cidade:'Florianópolis',bairro:'Campeche',tipo:'Casa',diaria:750,cap:10,status:'ativo',obs:''},
+      {id:'i7',nome:'Studio Trindade 3',cidade:'Florianópolis',bairro:'Trindade',tipo:'Studio',diaria:190,cap:2,status:'ativo',obs:''},
+      {id:'i8',nome:'Apto Cacupé 201',cidade:'Florianópolis',bairro:'Cacupé',tipo:'Apartamento',diaria:410,cap:4,status:'bloqueado',obs:''},
+    ];
+    saveImoveis(imoveis);
+  }
+
+  if (!reservas) {
+    reservas = [];
+    const origens = ['Airbnb','Airbnb','Airbnb','Booking','Direto'];
+    imoveis.filter(i=>i.status==='ativo').forEach(im => {
+      for (let m = 0; m < 6; m++) {
+        let d = 1;
+        while (d < 26) {
+          const dur = Math.floor(Math.random()*5)+2;
+          if (d+dur > 28) break;
+          const mesBase = now.getMonth()-5+m;
+          const anoBase = mesBase < 0 ? curYear-1 : curYear;
+          const mesReal = (mesBase+12)%12;
+          const ci = new Date(anoBase, mesReal, d);
+          const co = new Date(anoBase, mesReal, d+dur);
+          reservas.push({
+            id:uid(), imovelId:im.id,
+            hospede:'Hóspede '+uid().slice(0,4),
+            checkin:ci.toISOString().slice(0,10),
+            checkout:co.toISOString().slice(0,10),
+            valor:Math.round(im.diaria * dur * (0.85 + Math.random()*0.3)),
+            origem:origens[Math.floor(Math.random()*origens.length)],
+            obs:''
+          });
+          d += dur + Math.floor(Math.random()*3)+1;
+        }
+      }
+    });
+    saveReservas(reservas);
+  }
+  return { imoveis, reservas };
+}
+
+function saveImoveis(arr) { try { localStorage.setItem('vc_imoveis', JSON.stringify(arr)); } catch(e) {} }
+function saveReservas(arr) { try { localStorage.setItem('vc_reservas', JSON.stringify(arr)); } catch(e) {} }
+function getData() { return loadData(); }
+
+function showTab(tab, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (tab==='dashboard') renderDashboard();
+  if (tab==='imoveis') renderImoveis();
+  if (tab==='reservas') { populateFiltroImovel(); renderReservas(); }
+  if (tab==='relatorios') renderRelatorio();
+}
+
+function getOcupacao(imovelId, mes, ano) {
+  const {reservas} = getData();
+  const diasNoMes = new Date(ano, mes+1, 0).getDate();
+  let ocupados = 0;
+  reservas.filter(r=>r.imovelId===imovelId).forEach(r=>{
+    const ci = new Date(r.checkin), co = new Date(r.checkout);
+    for (let d = new Date(ci); d < co; d.setDate(d.getDate()+1)) {
+      if (d.getFullYear()===ano && d.getMonth()===mes) ocupados++;
+    }
+  });
+  return Math.min(100, Math.round((ocupados/diasNoMes)*100));
+}
+
+function getReceitaMes(imovelId, mes, ano) {
+  const {reservas} = getData();
+  return reservas.filter(r=>{
+    if (imovelId && r.imovelId!==imovelId) return false;
+    const ci = new Date(r.checkin);
+    return ci.getMonth()===mes && ci.getFullYear()===ano;
+  }).reduce((s,r)=>s+r.valor,0);
+}
+
+function occColor(occ) { return occ>=70?'#1D9E75':occ>=40?'#EF9F27':'#E24B4A'; }
+
+function renderDashboard() {
+  const {imoveis,reservas} = getData();
+  const ativos = imoveis.filter(i=>i.status==='ativo');
+  const curMes = now.getMonth();
+
+  const occs = ativos.map(i=>getOcupacao(i.id,curMes,curYear));
+  const avgOcc = occs.length ? Math.round(occs.reduce((a,b)=>a+b,0)/occs.length) : 0;
+  const receitaMes = getReceitaMes(null,curMes,curYear);
+  const reservasMes = reservas.filter(r=>{ const ci=new Date(r.checkin); return ci.getMonth()===curMes&&ci.getFullYear()===curYear; }).length;
+
+  document.getElementById('kpis').innerHTML = `
+    <div class="mc"><div class="mc-label">Imóveis ativos</div><div class="mc-val">${ativos.length}</div><div class="mc-sub">de ${imoveis.length} total</div></div>
+    <div class="mc"><div class="mc-label">Ocupação média</div><div class="mc-val" style="color:${occColor(avgOcc)}">${avgOcc}%</div><div class="mc-sub">${MONTHS[curMes]}</div></div>
+    <div class="mc"><div class="mc-label">Vacância média</div><div class="mc-val">${100-avgOcc}%</div><div class="mc-sub">${MONTHS[curMes]}</div></div>
+    <div class="mc"><div class="mc-label">Receita do mês</div><div class="mc-val">R$ ${Math.round(receitaMes/1000)}k</div><div class="mc-sub">${reservasMes} reservas</div></div>
+    <div class="mc"><div class="mc-label">Em manutenção</div><div class="mc-val">${imoveis.filter(i=>i.status==='manutencao').length}</div><div class="mc-sub">imóveis</div></div>
+    <div class="mc"><div class="mc-label">Bloqueados</div><div class="mc-val">${imoveis.filter(i=>i.status==='bloqueado').length}</div><div class="mc-sub">imóveis</div></div>
+  `;
+
+  const sorted = ativos.map(i=>({i,occ:getOcupacao(i.id,curMes,curYear)})).sort((a,b)=>b.occ-a.occ);
+  document.getElementById('rank-list').innerHTML = sorted.map(({i,occ})=>`
+    <div class="rank-bar">
+      <span class="rank-name" title="${i.nome}">${i.nome}</span>
+      <div class="rank-track"><div class="rank-fill" style="width:${occ}%;background:${occColor(occ)};"></div></div>
+      <span class="rank-val">${occ}%</span>
+    </div>
+  `).join('');
+
+  const trendLabels=[], trendOcc=[], trendRec=[];
+  for (let i=5;i>=0;i--) {
+    const mesIdx = now.getMonth()-i;
+    const m=(mesIdx+12)%12, y=mesIdx<0?curYear-1:curYear;
+    trendLabels.push(MONTHS[m]);
+    const o=ativos.map(im=>getOcupacao(im.id,m,y));
+    trendOcc.push(o.length?Math.round(o.reduce((a,b)=>a+b,0)/o.length):0);
+    trendRec.push(Math.round(getReceitaMes(null,m,y)/1000));
+  }
+
+  if (chartTrend) chartTrend.destroy();
+  chartTrend = new Chart(document.getElementById('chartTrend'),{
+    type:'bar',
+    data:{labels:trendLabels,datasets:[
+      {label:'Ocupação %',data:trendOcc,backgroundColor:'rgba(29,158,117,0.7)',yAxisID:'y'},
+      {label:'Receita (R$k)',data:trendRec,type:'line',borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.1)',tension:0.3,yAxisID:'y2',pointRadius:3,pointBackgroundColor:'#378ADD'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      y:{position:'left',ticks:{callback:v=>v+'%',font:{size:11}},grid:{color:'rgba(0,0,0,0.05)'},max:100,min:0},
+      y2:{position:'right',ticks:{callback:v=>'R$'+v+'k',font:{size:11}},grid:{display:false}},
+      x:{ticks:{font:{size:11}},grid:{display:false}}
+    }}
+  });
+
+  const alertas=[];
+  ativos.forEach(i=>{ const occ=getOcupacao(i.id,curMes,curYear); if(occ<30) alertas.push({tipo:'danger',msg:`<strong>${i.nome}</strong> — ocupação muito baixa: ${occ}%`}); });
+  imoveis.filter(i=>i.status==='manutencao').forEach(i=>alertas.push({tipo:'warn',msg:`<strong>${i.nome}</strong> — em manutenção${i.obs?': '+i.obs:''}`}));
+  imoveis.filter(i=>i.status==='bloqueado').forEach(i=>alertas.push({tipo:'warn',msg:`<strong>${i.nome}</strong> — bloqueado`}));
+  if(!alertas.length) alertas.push({tipo:'success',msg:'Nenhum alerta no momento. Portfólio saudável.'});
+  document.getElementById('alertas').innerHTML=alertas.map(a=>`<div class="alert alert-${a.tipo}">${a.msg}</div>`).join('');
+}
+
+function renderImoveis() {
+  const {imoveis}=getData();
+  const filtroStatus=document.getElementById('filtroStatus').value;
+  const busca=document.getElementById('busca').value.toLowerCase();
+  const curMes=now.getMonth();
+  const filtered=imoveis.filter(i=>{
+    if(filtroStatus&&i.status!==filtroStatus)return false;
+    if(busca&&!i.nome.toLowerCase().includes(busca)&&!i.bairro.toLowerCase().includes(busca))return false;
+    return true;
+  });
+  const badgeMap={ativo:'badge-ok',manutencao:'badge-warn',bloqueado:'badge-block'};
+  const labelMap={ativo:'Ativo',manutencao:'Manutenção',bloqueado:'Bloqueado'};
+  document.getElementById('tbody-imoveis').innerHTML=filtered.map(i=>{
+    const occ=getOcupacao(i.id,curMes,curYear);
+    const rec=getReceitaMes(i.id,curMes,curYear);
+    return `<tr>
+      <td><div style="font-weight:500;">${i.nome}</div><div style="font-size:11px;color:#888;">${i.bairro}${i.cidade?', '+i.cidade:''} · ${i.cap} hósp.</div></td>
+      <td>${i.tipo}</td>
+      <td><div style="font-size:12px;font-weight:500;color:${occColor(occ)}">${occ}%</div><div class="occ-bar"><div class="occ-fill" style="width:${occ}%;background:${occColor(occ)};"></div></div></td>
+      <td>R$ ${rec.toLocaleString('pt-BR')}</td>
+      <td>R$ ${i.diaria.toLocaleString('pt-BR')}</td>
+      <td><span class="badge ${badgeMap[i.status]||'badge-block'}">${labelMap[i.status]||i.status}</span></td>
+      <td>
+        <button class="btn-icon" onclick="editImovel('${i.id}')" title="Editar"><i class="ti ti-edit"></i></button>
+        <button class="btn-icon" onclick="deleteImovel('${i.id}')" title="Remover" style="margin-left:4px;"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:#aaa;padding:24px;">Nenhum imóvel encontrado</td></tr>';
+}
+
+function showFormImovel() {
+  editingImovelId=null;
+  document.getElementById('form-imovel-title').textContent='Novo imóvel';
+  ['fi-nome','fi-cidade','fi-bairro','fi-diaria','fi-cap','fi-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fi-tipo').value='Apartamento';
+  document.getElementById('fi-status').value='ativo';
+  document.getElementById('form-imovel').style.display='block';
+  document.getElementById('fi-nome').focus();
+}
+
+function editImovel(id) {
+  const {imoveis}=getData();
+  const im=imoveis.find(i=>i.id===id); if(!im)return;
+  editingImovelId=id;
+  document.getElementById('form-imovel-title').textContent='Editar imóvel';
+  document.getElementById('fi-nome').value=im.nome;
+  document.getElementById('fi-cidade').value=im.cidade;
+  document.getElementById('fi-bairro').value=im.bairro;
+  document.getElementById('fi-tipo').value=im.tipo;
+  document.getElementById('fi-diaria').value=im.diaria;
+  document.getElementById('fi-cap').value=im.cap;
+  document.getElementById('fi-status').value=im.status;
+  document.getElementById('fi-obs').value=im.obs||'';
+  document.getElementById('form-imovel').style.display='block';
+}
+
+function salvarImovel() {
+  const {imoveis}=getData();
+  const novo={
+    id:editingImovelId||uid(),
+    nome:document.getElementById('fi-nome').value.trim()||'Imóvel s/nome',
+    cidade:document.getElementById('fi-cidade').value.trim(),
+    bairro:document.getElementById('fi-bairro').value.trim(),
+    tipo:document.getElementById('fi-tipo').value,
+    diaria:+document.getElementById('fi-diaria').value||0,
+    cap:+document.getElementById('fi-cap').value||2,
+    status:document.getElementById('fi-status').value,
+    obs:document.getElementById('fi-obs').value.trim()
+  };
+  const idx=imoveis.findIndex(i=>i.id===editingImovelId);
+  if(idx>=0)imoveis[idx]=novo;else imoveis.push(novo);
+  saveImoveis(imoveis);
+  document.getElementById('form-imovel').style.display='none';
+  editingImovelId=null;
+  renderImoveis();
+}
+
+function deleteImovel(id) {
+  if(!confirm('Remover este imóvel? As reservas associadas serão mantidas no histórico.'))return;
+  const {imoveis}=getData();
+  saveImoveis(imoveis.filter(i=>i.id!==id));
+  renderImoveis();
+}
+
+function populateFiltroImovel() {
+  const {imoveis}=getData();
+  const opts=imoveis.map(i=>`<option value="${i.id}">${i.nome}</option>`).join('');
+  document.getElementById('filtroImovelRes').innerHTML='<option value="">Todos os imóveis</option>'+opts;
+  document.getElementById('fr-imovel').innerHTML=opts;
+}
+
+function calcValorSugerido() {
+  const {imoveis}=getData();
+  const imId=document.getElementById('fr-imovel').value;
+  const im=imoveis.find(i=>i.id===imId);
+  const ci=new Date(document.getElementById('fr-in').value);
+  const co=new Date(document.getElementById('fr-out').value);
+  if(im&&ci<co){
+    const noites=Math.round((co-ci)/864e5);
+    document.getElementById('fr-valor').value=Math.round(im.diaria*noites);
+  }
+}
+
+function renderReservas() {
+  const {imoveis,reservas}=getData();
+  const filtroImovel=document.getElementById('filtroImovelRes').value;
+  const filtroMes=document.getElementById('filtroMes').value;
+  const filtroOrigem=document.getElementById('filtroOrigem').value;
+  const filtered=reservas.filter(r=>{
+    if(filtroImovel&&r.imovelId!==filtroImovel)return false;
+    if(filtroMes!==''&&new Date(r.checkin).getMonth()!==+filtroMes)return false;
+    if(filtroOrigem&&r.origem!==filtroOrigem)return false;
+    return true;
+  }).sort((a,b)=>b.checkin.localeCompare(a.checkin)).slice(0,100);
+
+  const origColor={Airbnb:'badge-bad',Booking:'badge-warn',Direto:'badge-ok'};
+  const fmt=d=>new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  document.getElementById('tbody-reservas').innerHTML=filtered.map(r=>{
+    const im=imoveis.find(i=>i.id===r.imovelId);
+    const noites=Math.round((new Date(r.checkout)-new Date(r.checkin))/864e5);
+    return `<tr>
+      <td style="font-weight:500;">${im?im.nome:'—'}</td>
+      <td>${r.hospede}</td>
+      <td>${fmt(r.checkin)}</td>
+      <td>${fmt(r.checkout)}</td>
+      <td>${noites}</td>
+      <td>R$ ${r.valor.toLocaleString('pt-BR')}</td>
+      <td><span class="badge ${origColor[r.origem]||'badge-block'}">${r.origem}</span></td>
+      <td><button class="btn-icon" onclick="deleteReserva('${r.id}')" title="Remover"><i class="ti ti-trash"></i></button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px;">Nenhuma reserva encontrada</td></tr>';
+
+  const totalValor=filtered.reduce((s,r)=>s+r.valor,0);
+  document.getElementById('reservas-total').textContent=`${filtered.length} reservas · Total: R$ ${totalValor.toLocaleString('pt-BR')}`;
+}
+
+function showFormReserva() {
+  populateFiltroImovel();
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('fr-in').value=today;
+  document.getElementById('fr-out').value='';
+  document.getElementById('fr-hospede').value='';
+  document.getElementById('fr-valor').value='';
+  document.getElementById('fr-obs').value='';
+  document.getElementById('form-reserva').style.display='block';
+  document.getElementById('fr-hospede').focus();
+}
+
+function salvarReserva() {
+  const {reservas}=getData();
+  const nova={
+    id:uid(),
+    imovelId:document.getElementById('fr-imovel').value,
+    hospede:document.getElementById('fr-hospede').value.trim()||'Hóspede',
+    checkin:document.getElementById('fr-in').value,
+    checkout:document.getElementById('fr-out').value,
+    valor:+document.getElementById('fr-valor').value||0,
+    origem:document.getElementById('fr-origem').value,
+    obs:document.getElementById('fr-obs').value.trim()
+  };
+  if(!nova.checkin||!nova.checkout||nova.checkin>=nova.checkout){alert('Datas inválidas.');return;}
+  reservas.push(nova);
+  saveReservas(reservas);
+  document.getElementById('form-reserva').style.display='none';
+  renderReservas();
+}
+
+function deleteReserva(id) {
+  if(!confirm('Remover esta reserva?'))return;
+  const {reservas}=getData();
+  saveReservas(reservas.filter(r=>r.id!==id));
+  renderReservas();
+}
+
+function renderRelatorio() {
+  const {imoveis,reservas}=getData();
+  const meses=+document.getElementById('relPeriodo').value;
+  const curMes=now.getMonth();
+  const mesesValidos=[];
+  for(let i=meses-1;i>=0;i--){
+    const mesIdx=curMes-i;
+    const m=(mesIdx+12)%12,y=mesIdx<0?curYear-1:curYear;
+    mesesValidos.push({m,y});
+  }
+  const resFiltradas=reservas.filter(r=>{
+    const ci=new Date(r.checkin);
+    return mesesValidos.some(({m,y})=>ci.getMonth()===m&&ci.getFullYear()===y);
+  });
+
+  const totalReceita=resFiltradas.reduce((s,r)=>s+r.valor,0);
+  const totalReservas=resFiltradas.length;
+  const totalNoites=resFiltradas.reduce((s,r)=>{return s+Math.round((new Date(r.checkout)-new Date(r.checkin))/864e5);},0);
+  const ativosRel=imoveis.filter(i=>i.status==='ativo');
+  const avgOcc2=ativosRel.length?Math.round(ativosRel.map(i=>
+    mesesValidos.map(({m,y})=>getOcupacao(i.id,m,y)).reduce((a,b)=>a+b,0)/mesesValidos.length
+  ).reduce((a,b)=>a+b,0)/ativosRel.length):0;
+
+  document.getElementById('rel-kpis').innerHTML=`
+    <div class="mc"><div class="mc-label">Receita total</div><div class="mc-val">R$ ${Math.round(totalReceita/1000)}k</div><div class="mc-sub">${meses} meses</div></div>
+    <div class="mc"><div class="mc-label">Reservas</div><div class="mc-val">${totalReservas}</div><div class="mc-sub">no período</div></div>
+    <div class="mc"><div class="mc-label">Noites vendidas</div><div class="mc-val">${totalNoites}</div><div class="mc-sub">total</div></div>
+    <div class="mc"><div class="mc-label">Ocupação média</div><div class="mc-val" style="color:${occColor(avgOcc2)}">${avgOcc2}%</div><div class="mc-sub">imóveis ativos</div></div>
+    <div class="mc"><div class="mc-label">Ticket médio</div><div class="mc-val">R$ ${totalReservas?Math.round(totalReceita/totalReservas).toLocaleString('pt-BR'):0}</div><div class="mc-sub">por reserva</div></div>
+    <div class="mc"><div class="mc-label">Receita/mês</div><div class="mc-val">R$ ${Math.round(totalReceita/meses/1000)}k</div><div class="mc-sub">média mensal</div></div>
+  `;
+
+  const recPorImovel=imoveis.map(i=>({
+    nome:i.nome.length>16?i.nome.slice(0,16)+'…':i.nome,
+    rec:resFiltradas.filter(r=>r.imovelId===i.id).reduce((s,r)=>s+r.valor,0)
+  })).filter(x=>x.rec>0).sort((a,b)=>b.rec-a.rec).slice(0,10);
+
+  const wrapH = Math.max(200, recPorImovel.length*36+60);
+  document.getElementById('chart-receita-wrap').style.height = wrapH+'px';
+  if(chartReceita)chartReceita.destroy();
+  chartReceita=new Chart(document.getElementById('chartReceita'),{
+    type:'bar',data:{labels:recPorImovel.map(x=>x.nome),datasets:[{label:'Receita',data:recPorImovel.map(x=>Math.round(x.rec/1000)),backgroundColor:'rgba(29,158,117,0.75)',borderWidth:0,borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>'R$'+v+'k',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}},y:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+
+  const origens={};
+  resFiltradas.forEach(r=>{origens[r.origem]=(origens[r.origem]||0)+1;});
+  const origLabels=Object.keys(origens),origVals=Object.values(origens);
+  if(chartOrigem)chartOrigem.destroy();
+  chartOrigem=new Chart(document.getElementById('chartOrigem'),{
+    type:'doughnut',data:{labels:origLabels,datasets:[{data:origVals,backgroundColor:['#1D9E75','#378ADD','#EF9F27','#888780'].slice(0,origLabels.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:14,boxWidth:10}}}}
+  });
+
+  const CDI=10.5;
+  const rows=imoveis.map(i=>{
+    const rs=resFiltradas.filter(r=>r.imovelId===i.id);
+    const rec=rs.reduce((s,r)=>s+r.valor,0);
+    const noites=rs.reduce((s,r)=>s+Math.round((new Date(r.checkout)-new Date(r.checkin))/864e5),0);
+    const diasPeriodo=mesesValidos.length*30;
+    const occ=Math.round((noites/diasPeriodo)*100);
+    const retAnual=rec>0?(rec/meses*12/500000*100):0;
+    return {nome:i.nome,reservas:rs.length,noites,occ,rec,ticket:rs.length?Math.round(rec/rs.length):0,retAnual};
+  }).filter(x=>x.reservas>0).sort((a,b)=>b.rec-a.rec);
+
+  document.getElementById('tbody-relatorio').innerHTML=rows.map(r=>`<tr>
+    <td style="font-weight:500;">${r.nome}</td>
+    <td>${r.reservas}</td>
+    <td>${r.noites}</td>
+    <td><span class="badge ${r.occ>=70?'badge-ok':r.occ>=40?'badge-warn':'badge-bad'}">${r.occ}%</span></td>
+    <td>R$ ${r.rec.toLocaleString('pt-BR')}</td>
+    <td>R$ ${r.ticket.toLocaleString('pt-BR')}</td>
+    <td><span class="badge ${r.retAnual>=CDI?'badge-ok':'badge-bad'}">${r.retAnual>=CDI?'✓ Sim':'✗ Não'}</span></td>
+  </tr>`).join('');
+}
+
+function exportCSV() {
+  const {imoveis,reservas}=getData();
+  const meses=+document.getElementById('relPeriodo').value;
+  const curMes=now.getMonth();
+  const mesesValidos=[];
+  for(let i=meses-1;i>=0;i--){const m=(curMes-i+12)%12,y=curMes-i<0?curYear-1:curYear;mesesValidos.push({m,y});}
+  const rs=reservas.filter(r=>{const ci=new Date(r.checkin);return mesesValidos.some(({m,y})=>ci.getMonth()===m&&ci.getFullYear()===y);});
+  const header='Imóvel,Bairro,Hóspede,Check-in,Check-out,Noites,Valor,Origem\n';
+  const rows=rs.map(r=>{
+    const im=imoveis.find(i=>i.id===r.imovelId);
+    const noites=Math.round((new Date(r.checkout)-new Date(r.checkin))/864e5);
+    return `"${im?im.nome:''}","${im?im.bairro:''}","${r.hospede}","${r.checkin}","${r.checkout}",${noites},${r.valor},"${r.origem}"`;
+  }).join('\n');
+  const blob=new Blob(['\uFEFF'+header+rows],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vacancia_relatorio.csv';a.click();
+}
+
+function downloadTemplate() {
+  const csv='\uFEFFimovel,hospede,checkin,checkout,valor,origem\nApto Beira-Mar 101,João Silva,2026-06-01,2026-06-05,1800,Airbnb\nCasa Canasvieiras A,Maria Santos,2026-06-08,2026-06-12,2720,Booking\n';
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='template_reservas.csv';a.click();
+}
+
+let csvImportRows=[], csvImportHeaders=[];
+function importCSV(evt) {
+  const file=evt.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    csvImportHeaders=lines[0].split(',').map(h=>h.trim().replace(/"/g,'').toLowerCase());
+    csvImportRows=lines.slice(1).map(l=>l.split(',').map(v=>v.trim().replace(/"/g,'')));
+    document.getElementById('import-preview').innerHTML=`
+      <div class="alert alert-success" style="margin-bottom:10px;">Arquivo carregado: <strong>${csvImportRows.length} linhas</strong>, ${csvImportHeaders.length} colunas.</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">Colunas detectadas: <code>${csvImportHeaders.join(', ')}</code></div>
+    `;
+    const sugestoes=['imovel','hospede','checkin','checkout','valor','origem'];
+    const ids=['col-imovel','col-hospede','col-in','col-out','col-valor','col-origem'];
+    ids.forEach((id,i)=>{
+      const match=csvImportHeaders.find(h=>h.includes(sugestoes[i]))||csvImportHeaders[i]||'';
+      document.getElementById(id).value=match;
+    });
+    document.getElementById('col-mapping').style.display='block';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function confirmarImport() {
+  const {imoveis,reservas}=getData();
+  const cols={
+    imovel:document.getElementById('col-imovel').value.toLowerCase(),
+    hospede:document.getElementById('col-hospede').value.toLowerCase(),
+    cin:document.getElementById('col-in').value.toLowerCase(),
+    cout:document.getElementById('col-out').value.toLowerCase(),
+    valor:document.getElementById('col-valor').value.toLowerCase(),
+    origem:document.getElementById('col-origem').value.toLowerCase(),
+  };
+  const get=(row,col)=>{const idx=csvImportHeaders.indexOf(col);return idx>=0?row[idx]:'';};
+  let added=0;
+  csvImportRows.forEach(row=>{
+    const nomeImovel=get(row,cols.imovel);
+    let im=imoveis.find(i=>i.nome.toLowerCase()===nomeImovel.toLowerCase());
+    if(!im&&nomeImovel){
+      const novo={id:uid(),nome:nomeImovel,cidade:'',bairro:'',tipo:'Apartamento',diaria:0,cap:2,status:'ativo',obs:'Importado'};
+      imoveis.push(novo); im=novo;
+    }
+    if(!im)return;
+    const ci=get(row,cols.cin),co=get(row,cols.cout);
+    if(!ci||!co||ci>=co)return;
+    reservas.push({id:uid(),imovelId:im.id,hospede:get(row,cols.hospede)||'Hóspede',checkin:ci,checkout:co,valor:+get(row,cols.valor)||0,origem:get(row,cols.origem)||'Importado',obs:''});
+    added++;
+  });
+  saveImoveis(imoveis);saveReservas(reservas);
+  document.getElementById('import-preview').innerHTML=`<div class="alert alert-success"><strong>${added} reservas</strong> importadas com sucesso.</div>`;
+  document.getElementById('col-mapping').style.display='none';
+  csvImportRows=[];csvImportHeaders=[];
+  document.getElementById('csvInput').value='';
+}
+
+renderDashboard();
+</script>
+</body>
+</html>
